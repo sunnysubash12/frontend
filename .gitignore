@@ -14,6 +14,7 @@ dist-ssr
 *.local
 .angular
 
+
 /cypress/videos/
 /cypress/screenshots/
 

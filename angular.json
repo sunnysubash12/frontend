@@ -17,9 +17,10 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist",
+            "outputPath": "dist/",
             "index": "index.html",
             "browser": "src/main.ts",
+            "baseHref": ",/frontend/",
             "polyfills": [
               "zone.js"
             ],

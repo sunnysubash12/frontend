@@ -1,14 +1,15 @@
 {
   "name": "frontend",
   "version": "0.0.0",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "test": "ng test",
-    "lint": "ng lint",
-    "e2e": "ng e2e"
-  },
+"scripts": {
+  "ng": "ng",
+  "start": "ng serve",
+  "build": "ng build --output-path dist --base-href /frontend/",
+  "test": "ng test",
+  "lint": "ng lint",
+  "e2e": "ng e2e",
+  "deploy": "ng build --configuration production --output-path dist && npx angular-cli-ghpages --dir=dist"
+},
   "private": true,
   "dependencies": {
     "@angular/animations": "^18.2.13",
