@@ -27,7 +27,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       id: 1,
       name: 'Sunny',
       phone: '9876598765',
-      image: 'assets/user/user-1.png',
+      image: 'src/assets/user-1.png',
       roomId: {
         2: 'room-1',
         3: 'room-2',
@@ -38,7 +38,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       id: 2,
       name: 'Darshan',
       phone: '9876543210',
-      image: 'assets/user/user-2.png',
+      image: 'src/assets/user-2.png',
       roomId: {
         1: 'room-1',
         3: 'room-4',
@@ -49,7 +49,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       id: 3,
       name: 'Subash',
       phone: '9988776655',
-      image: 'assets/user/user-3.png',
+      image: 'src/assets/user-3.png',
       roomId: {
         1: 'room-2',
         2: 'room-4',
@@ -60,7 +60,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       id: 4,
       name: 'tergum',
       phone: '9876556789',
-      image: 'assets/user/user-4.png',
+      image: 'src/assets/user-4.png',
       roomId: {
         1: 'room-3',
         2: 'room-5',
