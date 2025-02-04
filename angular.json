@@ -18,7 +18,7 @@
           "builder": "@angular-devkit/build-angular:application",
           "options": {
             "outputPath": "dist/frontend",
-            "index": "index.html",
+            "index": "src/index.html",
             "browser": "src/main.ts",
             "baseHref": "/frontend/",
             "polyfills": [
@@ -27,10 +27,10 @@
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
-              "index.html",
+              "src/index.html",
               {
                 "glob": "**/*",
-                "input": "src/assets",
+                "input": "public",
                 "output": "/assets/"
               },
               "src/assets"
@@ -66,6 +66,9 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "frontend:build"
+          },
           "configurations": {
             "production": {
               "buildTarget": "frontend:build:production"
