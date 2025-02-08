@@ -1,93 +1,57 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-
 import { ChatService } from './services/chat/chat.service';
+import { environment } from '../environments/environment';
+import { UserService } from './services/user.service';
+import { ChannelService, ChatClientService, StreamI18nService } from 'stream-chat-angular';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import {jwtDecode} from 'jwt-decode';
+import { catchError, Observable, of, switchMap, map, from } from 'rxjs';
+
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
+
 export class AppComponent implements OnInit, AfterViewInit {
+  @ViewChild('popup', { static: false }) popup: any;
+  chatIsReady$!: Observable<boolean>;
 
-  @ViewChild('popup', {static: false}) popup: any;
 
-  public roomId: string;
-  public messageText: string;
-  public messageArray: { user: string, message: string }[] = [];
-  private storageArray = [];
-
-  public showScreen = false;
+  public users: any[] = [];
+  public messageText: string = "";
+  public userToken: string = '';
+  public messages: any[] = [];
+  public showScreen = false;  // Add this line to control login visibility
   public phone: string;
   public currentUser;
   public selectedUser;
 
-  public userList = [
-    {
-      id: 1,
-      name: 'Sunny',
-      phone: '9876598765',
-      image: 'assets/user-1.png',
-      roomId: {
-        2: 'room-1',
-        3: 'room-2',
-        4: 'room-3'
-      }
-    },
-    {
-      id: 2,
-      name: 'Darshan',
-      phone: '9876543210',
-      image: 'assets/user-2.png',
-      roomId: {
-        1: 'room-1',
-        3: 'room-4',
-        4: 'room-5'
-      }
-    },
-    {
-      id: 3,
-      name: 'Subash',
-      phone: '9988776655',
-      image: 'assets/user-3.png',
-      roomId: {
-        1: 'room-2',
-        2: 'room-4',
-        4: 'room-6'
-      }
-    },
-    {
-      id: 4,
-      name: 'tergum',
-      phone: '9876556789',
-      image: 'assets/user-4.png',
-      roomId: {
-        1: 'room-3',
-        2: 'room-5',
-        3: 'room-6'
-      }
-    }
-  ];
+
+
 
   constructor(
+    private channelService: ChannelService,
     private modalService: NgbModal,
-    private chatService: ChatService
-  ) {
-  }
+    private chatService: ChatService,
+    private userService: UserService,
+    private streamI18nService: StreamI18nService,
+  ) { }
+
 
   ngOnInit(): void {
-    this.chatService.getMessage()
-      .subscribe((data: { user: string, room: string, message: string }) => {
-        // this.messageArray.push(data);
-        if (this.roomId) {
-          setTimeout(() => {
-            this.storageArray = this.chatService.getStorage();
-            const storeIndex = this.storageArray
-              .findIndex((storage) => storage.roomId === this.roomId);
-            this.messageArray = this.storageArray[storeIndex].chats;
-          }, 500);
-        }
-      });
+        // Fetch user list from API
+        this.userService.getUsers().subscribe((users) => {
+          console.log('Users fetched:', users);  // Check if data is being received
+          this.users = Array.isArray(users) ? users : []; // Ensure it's an array
+          console.log('Users fetched:', users);  // Check if data is being received
+        }, (error) => {
+          console.error('Error fetching users:', error);  // Log any error
+        });
+
+    this.streamI18nService.setTranslation();
+
   }
 
   ngAfterViewInit(): void {
@@ -95,69 +59,67 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   openPopup(content: any): void {
-    this.modalService.open(content, {backdrop: 'static', centered: true});
+    this.modalService.open(content, { backdrop: 'static', centered: true });
   }
 
-  login(dismiss: any): void {
-    this.currentUser = this.userList.find(user => user.phone === this.phone.toString());
-    this.userList = this.userList.filter((user) => user.phone !== this.phone.toString());
+  login(dismiss: any) {
+    console.log('Login attempt with phone:', this.phone.toString());  // Log the phone number input
+    const user = this.users.find((u) => u.phone === this.phone.toString());
 
-    if (this.currentUser) {
-      this.showScreen = true;
-      dismiss();
-    }
-  }
+    if (user) {
+      this.currentUser = user;
+      console.log(user._id);
+      this.chatService.generateToken(user._id).subscribe((res) => {
+        console.log('Received Token:', res.token);  // Debug: Check token content
+        this.userToken = res.token;
+        console.log(jwtDecode(this.userToken));
+        this.showScreen = true;  // Show the chat screen after login
+        dismiss();
+        console.log(environment.stream.key, this.currentUser, this.userToken)
+        this.chatService.init(environment.stream.key, this.currentUser, this.userToken);
+        this.streamI18nService.setTranslation();
 
-  selectUserHandler(phone: string): void {
-    this.selectedUser = this.userList.find(user => user.phone === phone);
-    this.roomId = this.selectedUser.roomId[this.currentUser.id];
-    this.messageArray = [];
-
-    this.storageArray = this.chatService.getStorage();
-    const storeIndex = this.storageArray
-      .findIndex((storage) => storage.roomId === this.roomId);
-
-    if (storeIndex > -1) {
-      this.messageArray = this.storageArray[storeIndex].chats;
-    }
-
-    this.join(this.currentUser.name, this.roomId);
-  }
-
-  join(username: string, roomId: string): void {
-    this.chatService.joinRoom({user: username, room: roomId});
-  }
-
-  sendMessage(): void {
-    this.chatService.sendMessage({
-      user: this.currentUser.name,
-      room: this.roomId,
-      message: this.messageText
-    });
-
-    this.storageArray = this.chatService.getStorage();
-    const storeIndex = this.storageArray
-      .findIndex((storage) => storage.roomId === this.roomId);
-
-    if (storeIndex > -1) {
-      this.storageArray[storeIndex].chats.push({
-        user: this.currentUser.name,
-        message: this.messageText
+        this.chatIsReady$ = this.chatService.generateToken(user._id).pipe(
+          switchMap(() => this.channelService.init({
+            type: 'messaging',
+            members: { $in: [user._id] },  // Initialize the messaging channel with the currentUser
+          })),
+          map(() => {
+            this.showScreen = true;  // Show the chat screen when everything is ready
+            return true;
+          }),       
+           catchError(() => {
+            console.error('Error initializing chat');
+            return of(false);  // Return false if there's an error
+          })
+        );
       });
     } else {
-      const updateStorage = {
-        roomId: this.roomId,
-        chats: [{
-          user: this.currentUser.name,
-          message: this.messageText
-        }]
-      };
-
-      this.storageArray.push(updateStorage);
+      alert('User not found!');
     }
-
-    this.chatService.setStorage(this.storageArray);
-    this.messageText = '';
   }
 
+  selectUser(user: any) {
+    this.selectedUser = user;
+
+    // ✅ Fetch messages between currentUser and selectedUser
+    this.chatService.getMessages(this.currentUser.id, this.selectedUser.id).subscribe((messages) => {
+      this.messages = messages;
+    });
+  }
+
+  sendMessage() {
+    if (this.messageText.trim()) {
+      this.chatService
+        .sendMessage(this.currentUser.id, this.selectedUser.id, this.messageText)
+        .subscribe((newMessage) => {
+          this.messages.push(newMessage); // Add message to chat
+          this.messageText = ''; // Clear input
+        });
+    }
+  }
+
+
 }
+
+
